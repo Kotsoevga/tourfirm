@@ -88,7 +88,7 @@ void reservation::on_update_clicked()
        qDebug()<<"reservations NOT opened in reservation window!";
     }
 
-    switch(checkDataReservation(id, id_hotel, id_client, dates, queryReservations_, queryTours_, queryClients_, 1)){
+    switch(checkDataReservation(id, id_hotel, id_client, dates, queryReservations_, queryTours_, queryClients_, 2)){
     case 2:
         QMessageBox::critical(this, tr("Error"), tr("Invaild id data"));
         break;
@@ -113,7 +113,6 @@ void reservation::on_update_clicked()
         //при изменении id_client убираем currentTour_id у клиента и уменьшаем score у старого клиента и добавляем это у нового
         //при именении dates просто меняем дату
 
-
         if (!id_hotel.isEmpty()){
             QString old_id_hotel = getIdTour(id, queryReservations_); //получаем старое значение тура, который надо будет изменить
             updateTours_whenUpdateReservation(old_id_hotel, id_hotel, queryTours_);
@@ -123,12 +122,7 @@ void reservation::on_update_clicked()
             QString price_per_day = getPrice (id_hotel, queryTours_, queryMultipliers_);
             QString price = calculcatePrice(dates, price_per_day);
 
-            queryReservations_->prepare("UPDATE Reservations SET id_hotel = '"+id_hotel+"', name_hotel = '"+name_hotel+"', total_price = '"+price+"' where id ='"+id+"'");
-            if (queryReservations_->exec()){
-            QMessageBox::information(this, tr("Update status"), tr("name updated"));
-            } else {
-                 QMessageBox::critical(this, tr("Error"), tr("data not updated"));
-            }
+            queryReservations_->exec("UPDATE Reservations SET id_hotel = '"+id_hotel+"', name_hotel = '"+name_hotel+"', total_price = '"+price+"' where id ='"+id+"'");
         }
 
        if (!id_client.isEmpty()){
@@ -140,12 +134,7 @@ void reservation::on_update_clicked()
 
 
         name_client = getName(id_client, queryClients_, 2);
-        queryReservations_->prepare("UPDATE Reservations SET id_client = '"+id_client+"', name_client = '"+name_client+"' where id ='"+id+"'");
-        if (queryReservations_->exec()){
-        QMessageBox::information(this, tr("Update status"), tr("name updated"));
-        } else{
-             QMessageBox::critical(this, tr("Error"), tr("data not updated"));
-        }
+        queryReservations_->exec("UPDATE Reservations SET id_client = '"+id_client+"', name_client = '"+name_client+"' where id ='"+id+"'");
        }
 
        if (!dates.isEmpty()){
@@ -153,13 +142,10 @@ void reservation::on_update_clicked()
            QString price_per_day = getPrice (id_hotel, queryTours_, queryMultipliers_);
            QString price = calculcatePrice(dates, price_per_day);
 
-            queryReservations_->prepare("UPDATE Reservations SET dates = '"+dates+"', total_price = '"+price+"' where id ='"+id+"'");
-            if (queryReservations_->exec()){
-            QMessageBox::information(this, tr("Update status"), tr("name updated"));
-            } else{
-                 QMessageBox::critical(this, tr("Error"), tr("data not updated"));
-            }
+            queryReservations_->exec("UPDATE Reservations SET dates = '"+dates+"', total_price = '"+price+"' where id ='"+id+"'");
        }
+       QMessageBox::information(this, tr("Update status"), tr("Successfully updated"));
+
     }
 
 }
@@ -169,7 +155,7 @@ void reservation::on_delete_2_clicked()
 {
     QString id, id_client, id_hotel;
     id = ui->line_id->text();
-    if ((id.toUInt()) && (already_exist(id, queryReservations_, 3))){ //если id введен корректно
+    if ((id.toUInt()) && (already_exist(id, queryReservations_, 3)) && (!id.isEmpty())){ //если id введен корректно
 
         id_client = getIdClient(id, queryReservations_);
         id_hotel = getIdTour(id, queryReservations_);

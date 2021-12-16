@@ -109,7 +109,7 @@ int checkDataTour(const QString& id, const QString& name, const QString& availab
     if ((!checkSymbols(name)) && (!name.isEmpty())){
         return 13; //код ошики, что есть запрещенные символы для поля name
     }
-    if ((!((charter.toInt() == 0) || (charter.toInt() == 1))) && (!charter.isEmpty())){
+    if ((!((charter == "0") || (charter == "1"))) && (!charter.isEmpty())){
              return 10; //код ошибки что введены некорректные данные о чартере
     }
 

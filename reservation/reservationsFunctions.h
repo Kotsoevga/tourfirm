@@ -414,6 +414,7 @@ void updateClients_whenUpdateReservation(const QString& old_id_client, const QSt
     }
 
     //добавим current_tour у id_client и добавим score к id_client
+
     query->exec("SELECT * FROM Clients");
     while (query->next()){
         QString bdId = query->value("id").toString();
@@ -425,13 +426,13 @@ void updateClients_whenUpdateReservation(const QString& old_id_client, const QSt
                 tour_id += ", ";
                 tour_id += newTourId;
             }
-
+            /*
             QString score = query->value("tours_score").toString();
             int newScores = score.toInt() + 1;
             std::string strRooms = std::to_string(newScores);
-            score = toQString(strRooms);
+            score = toQString(strRooms);*/ //добавление баллов при изменении не требуется
 
-            query->prepare("UPDATE Clients SET current_tour_id = '"+tour_id+"', tours_score = '"+score+"' where id = '"+id_client+"'");
+            query->prepare("UPDATE Clients SET current_tour_id = '"+tour_id+"' where id = '"+id_client+"'");
             if (query ->exec()){
                 qDebug()<<"Clients updated!!!";
                 break;

@@ -53,7 +53,6 @@ void tour::on_save_button_clicked()
    case 13: QMessageBox::critical(this, tr("Error"), tr("Invalid name symbols"));
        break;
    default: queryTours_->prepare("insert into Tours (id, name, available_rooms, amount_rooms, price, stars, charter) values('"+id+"', '"+name+"', '"+availableRooms+"', '"+amountRooms+"', '"+price+"', '"+stars+"', '"+charter+"')");
-
        if(queryTours_->exec()){
            QMessageBox::information(this, tr("Saved status"), tr("Data saved"));
        } else {
@@ -124,13 +123,13 @@ void tour::on_update_button_clicked()
        }
 
        if (!stars.isEmpty()){
-           queryTours_->exec("UPDATE Tours SET stars ='"+price+"' where id = '"+stars+"'");
+           queryTours_->exec("UPDATE Tours SET stars ='"+stars+"' where id = '"+id+"'");
        }
 
        if (!charter.isEmpty()){
-           queryTours_->exec("UPDATE Tours SET charter ='"+charter+"' where id = '"+stars+"'");
+           queryTours_->exec("UPDATE Tours SET charter ='"+charter+"' where id = '"+id+"'");
        }
-
+       QMessageBox::information(this, tr("Updated status"), tr("Data updated"));
    }
 }
 
@@ -159,7 +158,7 @@ void tour::on_deleteButton_clicked()
        qDebug()<<"tours NOT opened in tour window!";
     }
 
-    if (is_unique(id, queryTours_)){
+    if (is_unique(id, queryTours_) || (id.isEmpty())){
          QMessageBox::critical(this, tr("Error"), tr("id doesn't exist"));
     } else {
        updateClientsReservations_whenDeleteTour(id, queryClients_, queryReservations_);

@@ -163,7 +163,7 @@ void client::on_delete_2_clicked()
        qDebug()<<"clients NOT opened in tour window!";
     }
 
-    if (!id_exists(id, queryClients_)){
+    if (!id_exists(id, queryClients_) || (id.isEmpty())){
          QMessageBox::critical(this, tr("Error"), tr("id doesn't exist"));
     } else {
 
