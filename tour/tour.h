@@ -10,6 +10,7 @@
 #include <QSqlQuery>
 #include <QSql>
 
+
 namespace Ui {
 class tour;
 }
@@ -23,13 +24,11 @@ public:
     ~tour();
 
 
-    void setDB(QSqlDatabase tours,  QSqlQuery *queryTours, QSqlDatabase clients,  QSqlQuery *queryClients, QSqlDatabase reservations,  QSqlQuery *queryReservations){
-        tours_ = tours;
+    void setDB(QSqlQuery *queryTours, QSqlQuery *queryClients,  QSqlQuery *queryReservations, std::atomic<bool> *threadFinished){
         queryTours_ = queryTours;
-        clients_ = clients;
         queryClients_ = queryClients;
-        reservations_ = reservations;
         queryReservations_ = queryReservations;
+        threadFinished_ = threadFinished;
     };
 
     void setStyle(const QString& background, const QString& textColor, QString buttonColor){
@@ -52,16 +51,11 @@ private slots:
 
 private:
     Ui::tour *ui;
-
-    QSqlDatabase tours_;
     QSqlQuery *queryTours_;
-
-    QSqlDatabase clients_;
     QSqlQuery *queryClients_;
-
-    QSqlDatabase reservations_;
     QSqlQuery *queryReservations_;
 
+    std::atomic<bool>* threadFinished_;
 };
 
 #endif // TOUR_H

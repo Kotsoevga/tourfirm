@@ -1,6 +1,57 @@
 #include "tour.h"
 #include <tourFunctions.h>
 #include <QSqlQueryModel>
+#include <QSqlTableModel>
+
+void execQueryToursSave(QSqlQuery* queryTours_, std::atomic<bool>* threadFinished, const QString& id, const QString& name, const QString& availableRooms, const QString& amountRooms, const QString& price, const QString& stars, const QString& charter){
+    queryTours_->prepare("insert into Tours (id, name, available_rooms, amount_rooms, price, stars, charter) values('"+id+"', '"+name+"', '"+availableRooms+"', '"+amountRooms+"', '"+price+"', '"+stars+"', '"+charter+"')");
+    if(queryTours_->exec()){
+        qDebug()<<"data saved";
+    } else {
+        qDebug()<<"data NOT saved";
+    }
+    *threadFinished = true;
+}
+
+void execQueryToursUpdate(QSqlQuery* queryTours_, QSqlQuery* queryReservations_, std::atomic<bool>* threadFinished, const QString& id, const QString& name, QString& availableRooms, const QString& amountRooms, const QString& price, const QString& stars, const QString& charter){
+    if (!name.isEmpty()){
+         queryTours_->exec("UPDATE Tours SET name = '"+name+"' where id = '"+id+"'");
+         updateNameInReservations(id, name, queryReservations_);
+    }
+
+    if (!amountRooms.isEmpty()){
+    int newAvailableRoooms = amountRooms.toInt() - getAmountRooms(id, queryTours_).toInt() + getAvailableRooms(id,queryTours_).toInt(); //считаем новое значение количества доступных комнат
+    std::string avRooms = std::to_string(newAvailableRoooms);
+    availableRooms = makeQString(avRooms);
+    queryTours_->exec("UPDATE Tours SET available_rooms = '"+availableRooms+"', amount_rooms = '"+amountRooms+"' where id = '"+id+"'");
+    }
+
+    if(!price.isEmpty()){
+        queryTours_->exec("UPDATE Tours SET price ='"+price+"' where id = '"+id+"'");
+    }
+
+    if (!stars.isEmpty()){
+        queryTours_->exec("UPDATE Tours SET stars ='"+stars+"' where id = '"+id+"'");
+    }
+
+    if (!charter.isEmpty()){
+        queryTours_->exec("UPDATE Tours SET charter ='"+charter+"' where id = '"+id+"'");
+    }
+     *threadFinished = true;
+}
+
+void execQueryToursDelete(QSqlQuery* queryTours_, QSqlQuery* queryReservations_, QSqlQuery* queryClients_, std::atomic<bool>* threadFinished, const QString& id){
+    updateClientsReservations_whenDeleteTour(id, queryClients_, queryReservations_);
+    queryTours_->prepare("delete from Tours where id = '"+id+"'");
+
+    if(queryTours_->exec()){
+       qDebug()<<"data deleted";
+    } else {
+       qDebug()<<"data NOT deleted";
+    }
+
+    *threadFinished = true;
+}
 
 
 tour::tour(QWidget *parent) :
@@ -25,11 +76,6 @@ void tour::on_save_button_clicked()
     price = ui->line_price->text(); //цена
     stars = ui->line_stars->text(); //класс тура (количество звезд отеля)
     charter = ui->line_charter->text(); //иннформация чартер или нет
-    if(tours_.open()){
-       qDebug()<<"tours opened in tour window!";
-    } else{
-       qDebug()<<"tours NOT opened in tour window!";
-    }
 
    switch(checkDataTour(id, name, availableRooms, amountRooms, price, stars, charter, queryTours_, 1)){ //проверяем корректность введеных данных
    case 1:
@@ -52,13 +98,15 @@ void tour::on_save_button_clicked()
        break;
    case 13: QMessageBox::critical(this, tr("Error"), tr("Invalid name symbols"));
        break;
-   default: queryTours_->prepare("insert into Tours (id, name, available_rooms, amount_rooms, price, stars, charter) values('"+id+"', '"+name+"', '"+availableRooms+"', '"+amountRooms+"', '"+price+"', '"+stars+"', '"+charter+"')");
-       if(queryTours_->exec()){
+   default:
+       if (*threadFinished_){
+           *threadFinished_ = false;
+           std::thread thread(execQueryToursSave, std::ref(queryTours_), std::ref(threadFinished_),std::ref(id), std::ref(name), std::ref(availableRooms), std::ref(amountRooms), std::ref(price), std::ref(stars), std::ref(charter));
+           thread.detach();
            QMessageBox::information(this, tr("Saved status"), tr("Data saved"));
-       } else {
-           QMessageBox::critical(this, tr("Error"), tr("Data not saved"));
+           break;
        }
-       break;
+        QMessageBox::critical(this, tr("Error"), tr("Wait other thread finished"));
     }
 
 }
@@ -74,11 +122,6 @@ void tour::on_update_button_clicked()
     price = ui->line_price->text(); //цена
     stars = ui->line_stars->text(); //класс тура (количество звезд отеля)
     charter = ui->line_charter->text(); //иннформация чартер или нет
-    if(tours_.open()){
-       qDebug()<<"tours opened in tour window!";
-    } else{
-       qDebug()<<"tours NOT opened in tour window!";
-    }
 
    switch(checkDataTour(id, name, availableRooms, amountRooms, price, stars, charter, queryTours_, 2)){ //проверяем корректность введеных данных
 
@@ -106,37 +149,20 @@ void tour::on_update_button_clicked()
        QMessageBox::critical(this, tr("Error"), tr("Invalid name symbols"));
               break;
    default:
-       if (!name.isEmpty()){
-            queryTours_->exec("UPDATE Tours SET name = '"+name+"' where id = '"+id+"'");
-            updateNameInReservations(id, name, queryReservations_);
+       if (*threadFinished_){
+           *threadFinished_ = false;
+           std::thread thread(execQueryToursUpdate, std::ref(queryTours_), std::ref(queryReservations_), std::ref(threadFinished_),std::ref(id), std::ref(name), std::ref(availableRooms), std::ref(amountRooms), std::ref(price), std::ref(stars), std::ref(charter));
+           thread.detach();
+           QMessageBox::information(this, tr("Update status"), tr("Data updated"));
+           break;
        }
-
-       if (!amountRooms.isEmpty()){
-       int newAvailableRoooms = amountRooms.toInt() - getAmountRooms(id, queryTours_).toInt() + getAvailableRooms(id,queryTours_).toInt(); //считаем новое значение количества доступных комнат
-       std::string avRooms = std::to_string(newAvailableRoooms);
-       availableRooms = makeQString(avRooms);
-       queryTours_->exec("UPDATE Tours SET available_rooms = '"+availableRooms+"', amount_rooms = '"+amountRooms+"' where id = '"+id+"'");
-       }
-
-       if(!price.isEmpty()){
-           queryTours_->exec("UPDATE Tours SET price ='"+price+"' where id = '"+id+"'");
-       }
-
-       if (!stars.isEmpty()){
-           queryTours_->exec("UPDATE Tours SET stars ='"+stars+"' where id = '"+id+"'");
-       }
-
-       if (!charter.isEmpty()){
-           queryTours_->exec("UPDATE Tours SET charter ='"+charter+"' where id = '"+id+"'");
-       }
-       QMessageBox::information(this, tr("Updated status"), tr("Data updated"));
+      QMessageBox::critical(this, tr("Error"), tr("Wait other thread finished"));
    }
 }
 
 
 void tour::on_reload_table_clicked()
-{
-
+{   QSqlDatabase ar;
     QSqlQueryModel* modelTours = new QSqlQueryModel();
     QSqlQuery* selectQuery = queryTours_;
 
@@ -150,25 +176,23 @@ void tour::on_reload_table_clicked()
 
 void tour::on_deleteButton_clicked()
 {
-    QString id;
-    id = ui->line_id->text();
-    if(tours_.open()){
-       qDebug()<<"tours opened in tour window!";
-    } else{
-       qDebug()<<"tours NOT opened in tour window!";
+    QString id = ui->line_id->text();
+    if ((!id.toUInt()) || (id.isEmpty())){
+        QMessageBox::critical(this, tr("Error"), tr("Invalid id data"));
+        return;
     }
 
-    if (is_unique(id, queryTours_) || (id.isEmpty())){
+    if (is_unique(id, queryTours_)){
          QMessageBox::critical(this, tr("Error"), tr("id doesn't exist"));
     } else {
-       updateClientsReservations_whenDeleteTour(id, queryClients_, queryReservations_);
-       queryTours_->prepare("delete from Tours where id = '"+id+"'");
-
-       if(queryTours_->exec()){
-           QMessageBox::information(this, tr("Delete status"), tr("Successfully deleted"));
-       } else {
-           QMessageBox::critical(this, tr("Error"), tr("Data not deleted"));
-       }
+        if (*threadFinished_){
+            *threadFinished_ = false;
+            std::thread thread(execQueryToursDelete, std::ref(queryTours_), std::ref(queryReservations_), std::ref(queryClients_), std::ref(threadFinished_),std::ref(id));
+            thread.detach();
+            QMessageBox::information(this, tr("Delete status"), tr("Data deleted"));
+            return;
+        }
+       QMessageBox::critical(this, tr("Error"), tr("Wait other thread finished"));
     }
 }
 

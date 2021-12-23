@@ -4,6 +4,19 @@
 #include <QMessageBox>
 #include <multipliersFunctions.h>
 
+
+void execQueryMultiplierUpdate(QSqlQuery* queryMultipliers_, std::atomic<bool> *threadFinished, const  QString& koef, const QString& percent){
+
+    queryMultipliers_->prepare("UPDATE Multiplier SET multiplier = '"+koef+"' where percent ='"+percent+"'");
+    if (queryMultipliers_->exec()){
+         qDebug()<<"Data updated";
+    } else{
+         qDebug()<<"Data not updated";
+    }
+
+    *threadFinished = true;
+}
+
 multiplier::multiplier(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::multiplier)
@@ -15,8 +28,6 @@ multiplier::~multiplier()
 {
     delete ui;
 }
-
-
 
 
 void multiplier::on_reload_table_clicked()
@@ -34,9 +45,8 @@ void multiplier::on_reload_table_clicked()
 
 void multiplier::on_pushButton_clicked()
 {
-    QString percent, koef;
-    percent = ui->line_percent->text();
-    koef = ui->line_multiplier->text();
+    QString percent = ui->line_percent->text();
+    QString koef = ui->line_multiplier->text();
     switch(checkInputData(percent, koef, queryMultipliers_)){
     case 1:
         QMessageBox::critical(this, tr("Error"), tr("All fields must be filled"));
@@ -55,13 +65,18 @@ void multiplier::on_pushButton_clicked()
         break;
     case 6:
         QMessageBox::critical(this, tr("Error"), tr("Multiplier must be not more than 10"));
+        break;
     default:
-        queryMultipliers_->prepare("UPDATE Multiplier SET multiplier = '"+koef+"' where percent ='"+percent+"'");
-        if (queryMultipliers_->exec()){
-             QMessageBox::information(this, tr("Update status"), tr("multiplier updated"));
-        } else{
-             QMessageBox::critical(this, tr("Error"), tr("data not updated"));
+
+        if (*threadFinished_){
+            *threadFinished_ = false;
+            std::thread thread(execQueryMultiplierUpdate, std::ref(queryMultipliers_), std::ref(threadFinished_), std::ref(koef), std::ref(percent));
+            thread.detach();
+            QMessageBox::information(this, tr("Update status"), tr("Data updated"));
+            return;
         }
+       QMessageBox::critical(this, tr("Error"), tr("Wait other thread finished"));
+
    }
 }
 

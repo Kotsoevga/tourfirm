@@ -582,8 +582,8 @@ QString calculcatePrice(const QString& dates, const QString& price_per_day){
     year2 += dates[19];
     year2 += dates[20];
 
-    struct std::tm a = { 0,0,0,day.toInt(), month.toInt() - 1, year.toInt() - 1900 }; /* June 24, 2004 */
-    struct std::tm b = { 0,0,0,day2.toInt(), month2.toInt() - 1, year2.toInt() - 1900 }; /* July 5, 2004 */
+    struct std::tm a = { 0,0,0,day.toInt(), month.toInt() - 1, year.toInt() - 1900 }; /* June 24, 2004 */ //сохраняем 1-ую дату
+    struct std::tm b = { 0,0,0,day2.toInt(), month2.toInt() - 1, year2.toInt() - 1900 }; /* July 5, 2004 */  //сохраняем 2-ую дату
     std::time_t x = std::mktime(&a);
     std::time_t y = std::mktime(&b);
     if (x != (std::time_t)(-1) && y != (std::time_t)(-1)){

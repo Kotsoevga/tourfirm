@@ -18,15 +18,12 @@ public:
     explicit reservation(QWidget *parent = nullptr);
     ~reservation();
 
-    void setDB(QSqlDatabase tours,  QSqlQuery *queryTours, QSqlDatabase clients,  QSqlQuery *queryClients, QSqlDatabase reservations,  QSqlQuery *queryReservations, QSqlDatabase multipliers, QSqlQuery* queryMultipliers){
-        tours_ = tours;
+    void setDB(QSqlQuery *queryTours, QSqlQuery *queryClients,QSqlQuery *queryReservations, QSqlQuery* queryMultipliers, std::atomic<bool> *threadFinished){
         queryTours_ = queryTours;
-        clients_ = clients;
         queryClients_ = queryClients;
-        reservations_ = reservations;
         queryReservations_ = queryReservations;
-        multipliers_ = multipliers;
         queryMultipliers_ = queryMultipliers;
+        threadFinished_ = threadFinished;
     };
 
     void setMyStyle(const QString& background, const QString& textColor, QString buttonColor){
@@ -49,17 +46,11 @@ private slots:
 private:
     Ui::reservation *ui;
 
-    QSqlDatabase tours_;
     QSqlQuery *queryTours_;
-
-    QSqlDatabase clients_;
     QSqlQuery *queryClients_;
-
-    QSqlDatabase reservations_;
     QSqlQuery *queryReservations_;
-
-    QSqlDatabase multipliers_;
     QSqlQuery *queryMultipliers_;
+    std::atomic<bool> *threadFinished_;
 
     bool boolScore;
 };

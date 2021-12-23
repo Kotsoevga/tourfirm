@@ -21,6 +21,7 @@ SOURCES += \
     multiplier.cpp \
     reservation.cpp \
     scaledpixmap.cpp \
+    sha512.cpp \
     tour.cpp
 
 HEADERS += \
@@ -38,6 +39,7 @@ HEADERS += \
     reservation.h \
     reservationsFunctions.h \
     scaledpixmap.h \
+    sha512.h \
     tour.h \
     tourFunctions.h
 

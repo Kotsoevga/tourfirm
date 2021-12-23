@@ -12,6 +12,7 @@
 #include <client.h>
 #include <reservation.h>
 #include <multiplier.h>
+#include <atomic>
 
 namespace Ui {
 class menu;
@@ -41,10 +42,10 @@ signals:
     void giveColor_to_buttoncolor(QString color);
     void giveButtonColor_to_colosetting (QString buttonColor);
     void giveColor_to_backgroundsetting(QString color);
-    void giveDBinfo(QSqlDatabase& tours,  QSqlQuery *queryTours, QSqlDatabase& clients,  QSqlQuery *queryClients, QSqlDatabase& reservations,  QSqlQuery *queryReservations);
-    void giveDBinfo2(QSqlDatabase& tours,  QSqlQuery *queryTours, QSqlDatabase& clients,  QSqlQuery *queryClients, QSqlDatabase& reservations,  QSqlQuery *queryReservations);
-    void giveDBinfo3(QSqlDatabase& tours,  QSqlQuery *queryTours, QSqlDatabase& clients,  QSqlQuery *queryClients, QSqlDatabase& reservations,  QSqlQuery *queryReservations, QSqlDatabase& multipliers, QSqlQuery *queryMultipliers );
-    void giveDBinfo4(QSqlDatabase& multiplier,  QSqlQuery *queryMultiplier);
+    void giveDBinfo(QSqlQuery *queryTours, QSqlQuery *queryClients, QSqlQuery *queryReservations, std::atomic<bool> *threadFinished);
+    void giveDBinfo2(QSqlQuery *queryTours, QSqlQuery *queryClients, QSqlQuery *queryReservations, std::atomic<bool> *threadFinished);
+    void giveDBinfo3(QSqlQuery *queryTours, QSqlQuery *queryClients, QSqlQuery *queryReservations, QSqlQuery *queryMultipliers, std::atomic<bool> *threadFinished);
+    void giveDBinfo4(QSqlQuery *queryMultiplier, std::atomic<bool> *threadFinished);
     void giveStyleToTours(const QString& currentBackground, const QString& currentTextColor, const QString& currentButtonColor);
     void giveStyleToClients(const QString& currentBackground, const QString& currentTextColor, const QString& currentButtonColor);
     void giveStyleToReservations(const QString& currentBackground, const QString& currentTextColor, const QString& currentButtonColor);
@@ -95,6 +96,9 @@ private:
 
     QSqlDatabase multipliers;
     QSqlQuery *queryMultipliers;
+
+    std::atomic<bool>* threadFinished;
+
 };
 
 #endif // MENU_H

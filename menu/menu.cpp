@@ -54,6 +54,8 @@ menu::menu(QWidget *parent) :
     connect(this, &menu::giveDBinfo4, multiplierWindow, &multiplier::setDB);
     connect(this, &menu::giveStyleToMultiplier, multiplierWindow, &multiplier::setMyStyle);
 
+    threadFinished = new std::atomic<bool>(true);
+
 
     //база данных текущих туров
     tours = QSqlDatabase::addDatabase("QSQLITE", "connectionToTours");
@@ -124,10 +126,6 @@ void menu::setColor (QString newTextColor){
 
 
 void menu::on_changeColorBackground_triggered(){ //открываем окно с настройкой фонового цвета
-    /*
-    hide();
-    windowBackground = new backgroundSetting(this);
-    windowBackground->show();*/
     emit giveColor_to_backgroundsetting(currentTextColor);
     close();
     windowBackground->show();
@@ -136,6 +134,19 @@ void menu::on_changeColorBackground_triggered(){ //открываем окно �
 
 void menu::on_exit_triggered()  //кнопка выхода из аккаунта
 {
+    if (toursWindow->isVisible()){
+        toursWindow->close();
+    }
+    if (clientsWindow->isVisible()){
+            clientsWindow->close();
+        }
+    if (reservationsWindow->isVisible()){
+            reservationsWindow->close();
+        }
+
+    if (multiplierWindow->isVisible()){
+        multiplierWindow->close();
+    }
     this->close();
     emit openLoginWindow();
 }
@@ -160,7 +171,7 @@ void menu::on_action_triggered() //открываем окно с настрой
 
 void menu::on_tours_clicked()
 {
-    emit giveDBinfo(tours, queryTours, clients, queryClients, reservations, queryReservations);
+    emit giveDBinfo(queryTours, queryClients, queryReservations, threadFinished);
     emit giveStyleToTours(currentBackground, currentTextColor, currentButtonColor);
     toursWindow->show();
 }
@@ -168,7 +179,7 @@ void menu::on_tours_clicked()
 
 void menu::on_client_clicked()
 {
-    emit giveDBinfo2(tours, queryTours, clients, queryClients, reservations, queryReservations);
+    emit giveDBinfo2(queryTours, queryClients, queryReservations, threadFinished);
     emit giveStyleToClients(currentBackground, currentTextColor, currentButtonColor);
     clientsWindow->show();
 }
@@ -176,7 +187,7 @@ void menu::on_client_clicked()
 
 void menu::on_booking_clicked()
 {
-     emit giveDBinfo3(tours, queryTours, clients, queryClients, reservations, queryReservations, multipliers, queryMultipliers);
+     emit giveDBinfo3(queryTours, queryClients, queryReservations, queryMultipliers, threadFinished);
      emit giveStyleToReservations(currentBackground, currentTextColor, currentButtonColor);
      reservationsWindow->show();
 }
@@ -184,7 +195,7 @@ void menu::on_booking_clicked()
 
 void menu::on_coefficient_clicked()
 {
-    emit giveDBinfo4(multipliers, queryMultipliers);
+    emit giveDBinfo4(queryMultipliers, threadFinished);
     emit giveStyleToMultiplier(currentBackground, currentTextColor, currentButtonColor);
     multiplierWindow->show();
 }
